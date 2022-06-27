@@ -33,7 +33,7 @@ class TalkRequestHandler:
         12. [admin] delete particular user data
         13. [admin] get system information
     """
-    requestTemplates:dict[str, int] = { 
+    requestTemplates:'dict[str, int]' = { 
         "ユーザー認証": 1,
         "メニュー": 2, "メニューを開いて": 2, "メニューをひらいて": 2,
         "げんき？": 3, "元気？": 3, "げんき?": 3, "元気?": 3, "げんき": 3, "元気": 3,
