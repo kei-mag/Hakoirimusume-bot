@@ -1,0 +1,20 @@
+{
+  "type": "template",
+  "altText": "ユーザー認証機能をロックしますか？",
+  "template": {
+      "type": "confirm",
+      "text": "現在、新規ユーザー認証は許可されています。\nユーザー認証機能をロックしますか？",
+      "actions": [
+          {
+            "type": "message",
+            "label": "Yes",
+            "text": "Yes."
+          },
+          {
+            "type": "message",
+            "label": "No",
+            "text": "No."
+          }
+      ]
+  }
+}

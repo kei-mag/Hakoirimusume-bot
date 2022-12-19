@@ -1,0 +1,136 @@
+{
+  "type": "bubble",
+  "hero": {
+    "type": "image",
+    "url": "https://scdn.line-apps.com/n/channel_devcenter/img/fx/01_2_restaurant.png",
+    "size": "full",
+    "aspectRatio": "20:13",
+    "aspectMode": "cover",
+    "action": {
+      "type": "uri",
+      "uri": "https://linecorp.com"
+    }
+  },
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "spacing": "md",
+    "action": {
+      "type": "uri",
+      "uri": "https://linecorp.com"
+    },
+    "contents": [
+      {
+        "type": "text",
+        "text": "Rabbit House Report",
+        "size": "xl",
+        "weight": "bold",
+        "color": "#1DB446",
+        "style": "italic",
+        "align": "start"
+      },
+      {
+        "type": "text",
+        "text": "2021/05/13 12:40",
+        "align": "end",
+        "color": "#999999",
+        "size": "sm"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "baseline",
+            "contents": [
+              {
+                "type": "text",
+                "text": "気温",
+                "size": "md",
+                "align": "start"
+              },
+              {
+                "type": "text",
+                "text": "25.6℃",
+                "weight": "bold",
+                "margin": "sm",
+                "flex": 0,
+                "align": "end",
+                "size": "lg",
+                "decoration": "underline"
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "baseline",
+            "contents": [
+              {
+                "type": "text",
+                "text": "湿度",
+                "size": "md",
+                "align": "start"
+              },
+              {
+                "type": "text",
+                "text": "40.1%",
+                "weight": "bold",
+                "margin": "sm",
+                "flex": 0,
+                "align": "end",
+                "size": "lg",
+                "decoration": "underline"
+              }
+            ]
+          },
+          {
+            "type": "box",
+            "layout": "baseline",
+            "contents": [
+              {
+                "type": "text",
+                "text": "気圧",
+                "size": "md",
+                "align": "start"
+              },
+              {
+                "type": "text",
+                "text": "1013.7hPa",
+                "weight": "bold",
+                "margin": "sm",
+                "flex": 0,
+                "align": "end",
+                "size": "lg",
+                "decoration": "underline"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "text": "周囲環境により値が正確ではない場合があります。",
+        "wrap": true,
+        "color": "#aaaaaa",
+        "size": "xxs"
+      }
+    ]
+  },
+  "footer": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "text",
+        "text": ">> 留守設定中",
+        "color": "#aaaaaa",
+        "size": "xs"
+      }
+    ]
+  }
+}
