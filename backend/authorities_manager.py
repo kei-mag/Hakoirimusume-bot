@@ -4,8 +4,9 @@ import json
 import os
 import datetime
 
+
 class AuthoritiesManager:
-    def __init__(self, data_file_path:str=None):
+    def __init__(self, data_file_path: str = None):
         if data_file_path == None:
             self._data_file_path = './data/authorities.json'
         else:
@@ -18,13 +19,14 @@ class AuthoritiesManager:
             except FileNotFoundError:
                 self._initialize_json()
             except json.decoder.JSONDecodeError:
-                print(f"[Warning] AuthoritiesManager: ${self._data_file_path} is broken.\nReset system data to recover.")
+                print(
+                    f"[Warning] AuthoritiesManager: ${self._data_file_path} is broken.\nReset system data to recover.")
                 exit(code=1)
-    
+
     def _initialize_json(self):
         try:
             with open(self._data_file_path, 'w', encoding='utf-8') as f:
-                init_map:'dict[str,str]' = {'users':{}}
+                init_map: 'dict[str,str]' = {'users': {}}
                 json.dump(init_map, f, indent=4, ensure_ascii=True)
         except FileNotFoundError:
             os.mkdir('./data')
@@ -34,7 +36,7 @@ class AuthoritiesManager:
         with open(self._data_file_path, 'w', encoding='utf-8') as f:
             json.dump(self._data_map, f, indent=4, ensure_ascii=True)
 
-    def add_user(self, user_id:str) -> bool or None:
+    def add_user(self, user_id: str) -> bool or None:
         """Add user to authrities.json
 
         Parameters
@@ -59,7 +61,8 @@ class AuthoritiesManager:
         except KeyError:
             self._data_map['users'][user_id] = {}
             self._data_map['users'][user_id]['type'] = 'user'
-            self._data_map['users'][user_id]['addDate'] = str(datetime.datetime.now())
+            self._data_map['users'][user_id]['addDate'] = str(
+                datetime.datetime.now())
             self._data_map['users'][user_id]['lastUpdateDate'] = None
             return True
 
@@ -70,14 +73,17 @@ class AuthoritiesManager:
                 return False
             else:
                 self._data_map['users'][user_id]['type'] = 'admin'
-                self._data_map['users'][user_id]['lastUpdateDate'] = str(datetime.datetime.now())
+                self._data_map['users'][user_id]['lastUpdateDate'] = str(
+                    datetime.datetime.now())
                 return True
         except KeyError:
             self._data_map['users'][user_id] = {}
             self._data_map['users'][user_id]['type'] = 'user'
-            self._data_map['users'][user_id]['addDate'] = str(datetime.datetime.now())
+            self._data_map['users'][user_id]['addDate'] = str(
+                datetime.datetime.now())
             self._data_map['users'][user_id]['lastUpdateDate'] = None
             return True
+
 
 if __name__ == '__main__':
     authManager = AuthoritiesManager()
