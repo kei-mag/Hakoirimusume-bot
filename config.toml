@@ -4,4 +4,4 @@ data_dir = "data/"
 database_Name = "database.db"
 
 [Hakoirimusume]
-aikotoba = "我が家の姫"
+initial_aikotoba = "はこいりむすめ"
