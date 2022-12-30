@@ -1,0 +1,7 @@
+[General]
+port_number = 21212
+data_dir = "data/"
+database_Name = "database.db"
+
+[Hakoirimusume]
+aikotoba = "我が家の姫"
