@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
 """
 LINE BOT "Hakoirimusume" server program
 
@@ -8,12 +6,13 @@ Please run this program after running "install.py"
 (c) 2022 Keisuke Magara
 """
 
-from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.models import MessageEvent, TextMessage
-from linebot.exceptions import InvalidSignatureError
 import os
+
 from backend.talk_request_handler import TalkRequestHandler
+from flask import Flask, abort, request
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage
 
 try:
     YOUR_CHANNEL_ACCESS_TOKEN = os.environ["CHANNEL_ACCESS_TOKEN"]

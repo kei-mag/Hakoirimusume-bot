@@ -1,5 +1,6 @@
-from linebot.models import FlexSendMessage
 import json
+
+from linebot.models import FlexSendMessage
 
 
 class ReportCreater:
