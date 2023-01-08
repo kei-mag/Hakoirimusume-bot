@@ -4,10 +4,10 @@ This scripts supports Imgur API version 3.
 
 This script works with Python 3.10 or later.
 If you are running this script in Python 3.9 or earlier,
-please uncomment line 8 or rewrite the type annotations in the corresponding format.
+please uncomment line 10 or rewrite the type annotations in the corresponding format.
 """
 
-# from __future__ import annotations  # For Python 3.8 - 3.9
+from __future__ import annotations  # For Python 3.8 - 3.9
 
 import json
 from io import BufferedReader
@@ -41,7 +41,7 @@ def upload_as_anonymous(client_id: str,
     Returns
     -------
     tuple[str, str] | str
-        If the file is successfully uploaded, a link to the file and a deletehash tuple is returned.
+        If the file is successfully uploaded, tuple with a link to the file and a deletehash is returned.
         If it fails, the contents of the response body are returned in text.
     """
     header = {

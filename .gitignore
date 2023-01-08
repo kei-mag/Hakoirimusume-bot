@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # Hakoirimusume Data dir
-./data/
+data/
 
 # Install Script
 setup.sh

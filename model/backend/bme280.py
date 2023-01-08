@@ -1,3 +1,11 @@
+"""Get current tempature, pressure, humid from BME280 sensor.
+
+This script is based on bme280_sample.py created by switch science.
+cite: https://github.com/SWITCHSCIENCE/samplecodes/blob/master/BME280/Python27/bme280_sample.py
+
+Copyright (c) 2018 Switch Science
+Modified by Keisuke Magara
+"""
 from smbus2 import SMBus
 
 
