@@ -19,5 +19,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('linebot/', include('linebot.urls'))
+    path('linebot/', include('line_bot_server.urls'))
 ]
