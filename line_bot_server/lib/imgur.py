@@ -24,7 +24,9 @@ IMGUR_API_URI = r'https://api.imgur.com/3'
 def upload_as_anonymous(client_id: str,
                         file: bytes | BufferedReader,
                         type: Literal['image', 'video'] = 'image',
-                        name: str | None = None) -> tuple[str, str] | str:
+                        title: str | None = None,
+                        name: str | None = None,
+                        desc: str | None = None) -> tuple[str, str] | str:
     """Upload image or video files anonymously to imgur.com
 
     Parameters
@@ -32,11 +34,15 @@ def upload_as_anonymous(client_id: str,
     client_id : str
         Imgur Application's Client ID
     file : bytes | BufferedReader
-        Files to be uploaded.
+        Files to be uploaded
     type : Literal['image', 'video'], optional
-        Specify file type as 'image' file or 'video' file, by default 'image'
+        File type, by default 'image'
+    title : str | None, optional
+        Title of this file, optional
     name : str | None, optional
         File name, by default None
+    desc : str | None, optional
+        Description, by default None
 
     Returns
     -------
@@ -50,11 +56,12 @@ def upload_as_anonymous(client_id: str,
     payload = {
         "type": "file",
         "title": "Rabbit's House Report Image",
-        "description": "This image is posted by LINE BOT \"箱入り娘\" automatically."
     }
     files = [(type, file)]
     if name is not None:
         payload["name"] = name
+    if desc is not None:
+        payload["description"] = desc
     response = requests.post(IMGUR_API_URI+'/upload',
                              headers=header, data=payload, files=files)
     if response.status_code == 200:
