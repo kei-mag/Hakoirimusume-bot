@@ -44,6 +44,16 @@
 ## User
 - id (int) LINEのユーザーID
 - type ([-1, 0, 1]) -1:削除済みユーザ, 0:一般ユーザ, 1:特権ユーザ
+- 現在の状態 (int) 0:待機, 1:ログイン, ...
+- 前回のリクエスト時間
+
 
 ## NotifyDest
-- 
+- ID
+- Tempature
+- leave_mode (bool)
+
+## Report Photo
+- 撮影時間
+- deletehash
+- url
