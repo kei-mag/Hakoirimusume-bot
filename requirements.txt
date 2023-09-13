@@ -1,2 +1,0 @@
-Django>=4.2.2
-line-bot-sdk>=2.4.3

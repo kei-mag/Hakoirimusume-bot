@@ -7,3 +7,7 @@ Raspberry Pi に接続したカメラの映像と室温・湿度・気圧セン�
 - Raspberry Pi 4 model B 8GB, Raspberry Pi zero WH
 - Raspberry Pi OS Bullseye (32bit, 64bit)
 - Python 3.9.2
+
+## 関連URL
+- [LINE Developers Console](https://developers.line.biz/console/)
+- [LINE API Status](https://api.line-status.info/)
