@@ -2,13 +2,13 @@
 
 This scripts supports Imgur API version 3.
 
-This script works with Python 3.10 or later.
+This script is compatible with Python 3.10 or later.
 If you are running this script in Python 3.9 or earlier,
 please uncomment line 10 or rewrite the type annotations in the corresponding format.
 """
 
-from __future__ import annotations  # For Python 3.8 - 3.9
-
+from __future__ import annotations
+from datetime import datetime  # For Python 3.8 - 3.9
 import json
 from io import BufferedReader
 from typing import Literal
@@ -18,13 +18,12 @@ import requests
 # Imgur API version 3
 # Upload: https://api.imgur.com/3/upload
 # Get: https://api.imgur.com/3/image/{id}
-IMGUR_API_URI = r'https://api.imgur.com/3'
+IMGUR_API_URI = r"https://api.imgur.com/3"
 
 
-def upload_as_anonymous(client_id: str,
-                        file: bytes | BufferedReader,
-                        type: Literal['image', 'video'] = 'image',
-                        name: str | None = None) -> tuple[str, str] | str:
+def upload_as_anonymous(
+    client_id: str, file: bytes | BufferedReader, type: Literal["image", "video"] = "image", name: str | None = None
+) -> tuple[str, str] | str:
     """Upload image or video files anonymously to imgur.com
 
     Parameters
@@ -44,19 +43,16 @@ def upload_as_anonymous(client_id: str,
         If the file is successfully uploaded, tuple with a link to the file and a deletehash is returned.
         If it fails, the contents of the response body are returned in text.
     """
-    header = {
-        "Authorization": f"Client-ID {client_id}"
-    }
+    header = {"Authorization": f"Client-ID {client_id}"}
     payload = {
         "type": "file",
-        "title": "Rabbit's House Report Image",
-        "description": "This image is posted by LINE BOT \"箱入り娘\" automatically."
+        "title": f"Rabbit's House Report ({datetime.now()})",
+        "description": 'This image is posted by LINE BOT "箱入り娘" automatically.',
     }
     files = [(type, file)]
     if name is not None:
         payload["name"] = name
-    response = requests.post(IMGUR_API_URI+'/upload',
-                             headers=header, data=payload, files=files)
+    response = requests.post(IMGUR_API_URI + "/upload", headers=header, data=payload, files=files)
     if response.status_code == 200:
         response_json = json.JSONDecoder().decode(response.text)
         return response_json["data"]["link"], response_json["data"]["deletehash"]
@@ -80,11 +76,8 @@ def delete_from_imgur(client_id: str, deletehash: str) -> str | Literal[True]:
         Return `True` if the Imgur server returns status code 200.
         If it fails, the contents of the response body are returned in text.
     """
-    header = {
-        "Authorization": f"Client-ID {client_id}"
-    }
-    response = requests.delete(
-        IMGUR_API_URI+f'/image/{deletehash}', headers=header)
+    header = {"Authorization": f"Client-ID {client_id}"}
+    response = requests.delete(IMGUR_API_URI + f"/image/{deletehash}", headers=header)
     if response.status_code == 200:
         return True
     else:

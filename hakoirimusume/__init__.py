@@ -4,6 +4,8 @@ from datetime import datetime
 
 import yaml
 from flask import Flask, abort, request
+from hakoirimusume.talk_request_handler import TalkRequestHandler
+
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import ApiClient, Configuration, MessagingApi, ReplyMessageRequest, TextMessage
@@ -12,7 +14,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 def create_app(test_config=None):
     # create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True, static_folder=None)
     app.config.from_mapping(
         SECRET_KEY="dev",  ## os.urandom(24)
         DATABASE=os.path.join(app.instance_path, "hakoirimusume.sqlite"),
@@ -51,6 +53,9 @@ def create_app(test_config=None):
         )
         exit()
     launch_time = datetime.now()
+    # Initialize model classes
+    with app.app_context():
+        request_handler = TalkRequestHandler()
 
     @app.route("/check")
     def response_status():
@@ -83,12 +88,15 @@ def create_app(test_config=None):
     def handle_message(event):
         with ApiClient(configuration) as api_client:
             line_bot_api = MessagingApi(api_client)
-            line_bot_api.reply_message_with_http_info(
-                ReplyMessageRequest(
-                    replyToken=event.reply_token,
-                    messages=[TextMessage(text=event.message.text, quickReply=None)],
-                    notificationDisabled=False,
+            reply = request_handler.get_reply(event)
+            if reply is not None:
+                line_bot_api.reply_message_with_http_info(
+                    ReplyMessageRequest(
+                        replyToken=event.reply_token,
+                        messages=reply,
+                        # messages=[TextMessage(text=event.message.text, quickReply=None)],
+                        notificationDisabled=False,
+                    )
                 )
-            )
 
     return app

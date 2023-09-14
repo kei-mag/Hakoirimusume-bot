@@ -1,51 +1,74 @@
-import json
+import os
+import sys
 from datetime import datetime
-from typing import Any
+from sqlite3 import OperationalError
 
-from linebot.models import (
-    ButtonsTemplate,
-    ConfirmTemplate,
-    FlexSendMessage,
-    MessageAction,
-    MessageEvent,
-    TemplateSendMessage,
-    TextMessage,
-    TextSendMessage,
-)
-from report_creater import ReportCreater
+import yaml
+from flask import current_app
+from linebot.v3.messaging.models import (ConfirmTemplate, FlexContainer,
+                                         FlexMessage, QuickReply, TextMessage)
+
+from hakoirimusume.authorities_manager import AuthoritiesManager
+from hakoirimusume.db import get_db
+from hakoirimusume.report_creator import ReportCreator
 
 
 class TalkRequestHandler:
-    """Handle request received from LINE talk message.
+    """Handle request received from LINE talk message."""
 
-    Attributes
-    ----------
-    _REQUEST_PATTERN @class : dict[str, int]
-        dictionary linking request message and request type
+    TIME_OUT = 5  # min.
 
-    _REPLY_PATTERN @class : tuple
-        tuple of reply pattern
+    # User State
+    STATE_NORMAL = 0
+    STATE_WAIT_FOR_AIKOTOBA = 1
+    STATE_CONFIRM_SHUTDOWN = 2
+    STATE_WAIT_FOR_TEMPERATURE = 3
+    STATE_CONFIRM_DELETE = 4
+    STATE_WAIT_FOR_ADMIN_PASS = 5
 
-    current_requester : None or dict[str, int]
-        LINE user ID of current requester, the user's last status, and last request time
-        {
-            "user_id": <User ID of current requester>,
-            "status": <status type of current requester>,
-            "request_time": <time to recieve last request message from current requester>
-        }
-    """
+    def __init__(self) -> None:
+        root = current_app.root_path
+        # Load menu structure
+        with open(f"{root}/resources/menu.json", "r", encoding="UTF-8") as f:
+            self.menu_data = FlexContainer.from_json(f.read())
+        # Load request map
+        with open(f"{root}/resources/acceptable_requests.yml") as f:
+            data = yaml.safe_load(f)
+            self.request_type = data["request_type"]
+            self.request_query = data["request_query"]
+        # Initialize other classes
+        self.report_creator = ReportCreator()
+        self.otp_timeout = current_app.config["AIKOTOBA_EXPIRED_TIME"]
+        self.auth_manager = AuthoritiesManager(self.otp_timeout)
 
-    TIME_OUT = 5  # min
+    def get_user_state(self, user_id):
+        db = get_db()
+        cur = db.cursor()
+        # TIMEOUT
+        cur.execute(
+            f"UPDATE user SET request_state={self.STATE_NORMAL} WHERE strftime('%s', datetime(request_time, '+{self.TIME_OUT} seconds'))<strftime('%s', 'now');"
+        )
+        db.commit()
+        try:
+            state = cur.execute(f"SELECT request_state FROM user WHERE id='{user_id}'").fetchone()
+            if state is None:
+                return state
+            else:
+                return state[0]
+        except OperationalError:
+            return None
 
-    def __init__(self, request_definition) -> None:
-        with open("backend/assets/menu.json", "rb") as f:
-            self.menu_data = json.load(f)
-        self.report_creater = ReportCreater()
-        self.request_type = request_definition["request_type"]
-        self.request_query = request_definition["request_query"]
-        
+    def set_user_state(self, user_id, state=0):
+        db = get_db()
+        cur = db.cursor()
+        try:
+            cur.execute(f"UPDATE user SET request_state={state}, request_time=datetime('now') WHERE id='{user_id}';")
+            db.commit()
+        except OperationalError:
+            pass
+        return
 
-    def get_reply_object(self, event) -> Any:
+    def get_reply(self, event):
         """Provide reply message to server
 
         Parameters
@@ -59,74 +82,116 @@ class TalkRequestHandler:
                         or ConfirmTemplate or MessageAction or ButtonsTemplate
             reply message object
         """
-        print(f"talk_request_handler.py @getReplyObject first line: {str(self.current_requester)}")
-        request_time = datetime.now()
-        self._timeOutCheck(request_time)
-        message_type = self._parse_request(event.message.text)
-
-        # if server is busy
-        if (message_type != 0) and (self.current_requester is not None):
-            if event.source.user_id != self.current_requester:
-                return TextSendMessage("今、他の人が利用中だよ。\nちょっと待ってから\nもう１回訊いてみて！")
+        message = event.message.text
+        # todo: delete when finish ----------------
+        if message == "db":
+            print("dbdb")
+            db = get_db()
+            cur = db.cursor()
+            result = db.execute("SELECT datetime('now');").fetchone()[0]
+            print("curTime", result)
+            print("--------------- user ---------------")
+            result = db.execute("SELECT * from user;").fetchall()
+            for r in result:
+                for v in r:
+                    print(v, end="\t")
+                print("")
+            print("--------------- otp ---------------")
+            result = db.execute("SELECT * from otp;").fetchall()
+            for r in result:
+                for v in r:
+                    print(v, end="\t")
+                print("")
+            return [TextMessage(quickReply=None, text="Check console")]
+        # todo: delete -------------------------
+        user_id = event.source.user_id
+        user_auth = self.auth_manager.is_user(user_id)
+        user_state = self.get_user_state(user_id)
+        print(user_id, user_auth, user_state, type(user_state))
+        if user_state is not None and user_state != self.STATE_NORMAL:
+            if user_state == self.STATE_WAIT_FOR_AIKOTOBA:
+                result = self.auth_manager.authorize(user_id, message, self.auth_manager.NORMAL_USER)
+                self.set_user_state(user_id)
+                if result is True:
+                    quick_reply = {
+                        "items": [
+                            {"type": "action", "action": {"type": "message", "label": "メニュー", "text": "メニューをひらいて"}}
+                        ]
+                    }
+                    return [
+                        TextMessage(quickReply=None, text="ユーザー認証が完了しました。"),
+                        TextMessage(quickReply=QuickReply.from_dict(quick_reply), text="こんにちは！「使い方」と言ってみてください。"),
+                    ]
+                elif result is False:
+                    quick_reply = {
+                        "items": [
+                            {"type": "action", "action": {"type": "message", "label": "再度認証する", "text": "ユーザー認証"}}
+                        ]
+                    }
+                    return [
+                        TextMessage(quickReply=QuickReply.from_dict(quick_reply), text="ユーザー認証に失敗しました。\nもう一度試してみてください。")
+                    ]
+                else:
+                    return [TextMessage(quickReply=None, text="あなたは既にユーザーのようです。")]
+            elif user_state == self.STATE_CONFIRM_SHUTDOWN:
+                request = self._parse_request(message)
+                self.set_user_state(user_id)
+                if request is True:
+                    # os.system("shutdown -h")
+                    return [TextMessage(quickReply=None, text="シャットダウンします")]
+            elif user_state == self.STATE_WAIT_FOR_TEMPERATURE:
+                self.set_user_state(user_id)
+                return [TextMessage(quickReply=None, text="WAIT_FOR_TEMPERATURE→NORMAL")]
+            elif user_state == self.STATE_CONFIRM_DELETE:
+                self.set_user_state(user_id)
+                return [TextMessage(quickReply=None, text="CONFIRM_DELETE→NORMAL")]
+            elif user_state == self.STATE_WAIT_FOR_ADMIN_PASS:
+                self.set_user_state(user_id)
+                return [TextMessage(quickReply=None, text="WAIT_FOR_ADMIN_PASS→NORMAL")]
             else:
-                # todo: multi-step function
+                self.set_user_state(user_id)
+                print("<ERROR> Undefined User State")
                 pass
+        request = self._parse_request(message)
+        if request is None:  # message is not a request
+            return None
         else:
-            if message_type == 1:
-                self.current_requester = {
-                    "user_id": event.source.user_id,
-                    "status": 1,
-                    "request_time": int(request_time.timestamp()),
-                }
-                return TextSendMessage(">> ユーザー認証をします。 <<\n合言葉を送信してください\n(一字一句正確に!)")
-
-            elif message_type == 2:
-                self.current_requester = None
-                return FlexSendMessage(alt_text="メニュー", contents=self.menu_data)
-
-            elif message_type == 3:
-                self.current_requester = None
-                return self.report_creater.get_report()
-
-            elif message_type == 4:
-                # todo: 留守番モードに設定
-                return TextSendMessage("いってらっしゃい！\n留守番モードで待ってるね♪")
-
-            elif message_type == 5:
-                # todo: 留守番モード解除
-                return TextSendMessage("おかえり！\n留守番モードを解除するね\n^(>v<)^")
-
-            elif message_type == 6:
-                return TextSendMessage("合言葉は、\n<<これから実装>>\nだよ～")
-
-            elif message_type == 7:
-                return TextSendMessage("まだ実装されていません！")
-
-            elif message_type == 8:
-                pass
-
-            elif message_type == 9:
-                pass
-
-            elif message_type == 10:
-                pass
-
-            elif message_type == 11:
-                pass
-
-            elif message_type == 12:
-                pass
-
-            elif message_type == 13:
-                pass
-
-            elif message_type == 14:
-                pass
+            if request == "authorize":
+                self.set_user_state(user_id, self.STATE_WAIT_FOR_AIKOTOBA)
+                return [
+                    TextMessage(quickReply=None, text="ユーザー認証をします。"),
+                    TextMessage(quickReply=None, text="合言葉を入力してください。\n(一字一句正確に！)"),
+                ]
+            elif request == "invite_user":
+                password = self.auth_manager.invite_user(user_id, 0)
+                if password is False:
+                    text = ["権限がないため、新たなユーザーを招待できません。\n他の方に依頼してください。"]
+                else:
+                    text = [
+                        "新しいユーザーのための合言葉を生成します。\n合言葉は、",
+                        password,
+                        "です。\nこの合言葉を招待したいユーザーに伝えてください。",
+                        f"※合言葉は{self.otp_timeout}秒有効です。\n認証できない場合はもう一度招待をやり直してください。",
+                    ]
+                return [TextMessage(quickReply=None, text=t) for t in text]
+            elif request == "open_menu":
+                return [FlexMessage(quickReply=None, altText="メニュー", contents=self.menu_data)]
+            elif request == "request_report":
+                return [self.report_creator.get_report()]
+            elif request == "turn_on_leave_mode":
+                return [TextMessage(quickReply=None, text="外出モードオン")]
+            elif request == "turn_off_leave_mode":
+                return [TextMessage(quickReply=None, text="外出モードオフ")]
+            elif request == "delete_user_data":
+                return [TextMessage(quickReply=None, text="ユーザー削除")]
+            elif request == "open_settings":
+                return [TextMessage(quickReply=None, text="設定を開く")]
+            elif request == "configure_temperature":
+                return [TextMessage(quickReply=None, text="温度設定")]
+            elif request == "shutdown_server":
+                return [TextMessage(quickReply=None, text="サーバーシャットダウン")]
             else:
-                # not request
-                pass
-
-        return TextSendMessage("予期しない動作を確認しました。\nもう一度最初からやり直してください。")
+                return [TextMessage(quickReply=None, text="[想定外のリクエスト]\nエラーが発生しました。開発者に連絡し、もう一度やり直してください。")]
 
     def _parse_request(self, message: str):
         """Parse request message from user.
@@ -146,12 +211,13 @@ class TalkRequestHandler:
         except KeyError:
             return None
 
+
 class StateManager:
     def set_state(self, s):
         # データベースのユーザーステートを設定
         # ユーザーのリクエストタイムを設定
         ...
-    
+
     def _check_time_out(self, request_time: datetime) -> None:
         # if <リクエスト時間> - <前回のリクエスト時間> > TIMEOUT:
         #   ユーザーステートをdefaultに
