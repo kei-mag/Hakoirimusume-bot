@@ -7,7 +7,7 @@ request_type:
   - &turn_off_leave_mode turn_off_leave_mode
   - &delete_user_data delete_user_data
   - &open_settings open_settings
-  - &configure_tempature configure_tempature
+  - &configure_temperature configure_temperature
   - &shutdown_server shutdown_server
 
 request_query:
@@ -30,10 +30,10 @@ request_query:
   "ただいま！": *turn_off_leave_mode
   "ただいま。": *turn_off_leave_mode
   "ただいま": *turn_off_leave_mode
-  "新しいユーザーを追加": *invite_user
+  "新しいユーザーを招待したい": *invite_user
   "私のユーザー認証情報を削除して": *delete_user_data
   "システム設定を開いて": *open_settings
-  "通知温度を変更する": *configure_tempature
+  "通知温度を変更する": *configure_temperature
   "サーバーをシャットダウンして": *shutdown_server
   # Reply
   "はい": yes

@@ -31,7 +31,7 @@
           "align": "end",
           "color": "#999999",
           "size": "sm",
-          "text": "CurrentTime"
+          "text": "<CurrentTime>"
         },
         {
           "type": "separator"
@@ -53,7 +53,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "Tempeature",
+                  "text": "<Temperature>",
                   "weight": "bold",
                   "margin": "sm",
                   "flex": 0,
@@ -75,7 +75,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "Humid",
+                  "text": "<Humid>",
                   "weight": "bold",
                   "margin": "sm",
                   "flex": 0,
@@ -97,7 +97,7 @@
                 },
                 {
                   "type": "text",
-                  "text": "Pressure",
+                  "text": "<Pressure>",
                   "weight": "bold",
                   "margin": "sm",
                   "flex": 0,
@@ -111,7 +111,7 @@
         },
         {
           "type": "text",
-          "text": "周囲環境により値が正確ではない場合があります。",
+          "text": "周囲環境によっては、値が正確ではない場合があります。",
           "wrap": true,
           "color": "#aaaaaa",
           "size": "xxs"
@@ -124,7 +124,7 @@
       "contents": [
         {
           "type": "text",
-          "text": ">> call type",
+          "text": ">> <CallType>",
           "color": "#aaaaaa",
           "size": "xs"
         }
