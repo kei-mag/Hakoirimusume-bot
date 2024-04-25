@@ -17,9 +17,38 @@ repositories {
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter")
+	implementation("org.projectlombok:lombok:1.18.30")
+	implementation("org.projectlombok:lombok:1.18.30")
+//	implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
+//
+//	implementation(project(":spring-boot:line-bot-spring-boot-handler"))
+//	implementation("org.springframework.boot:spring-boot-starter-web")
+//	implementation("org.springframework.boot:spring-boot-starter-actuator")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+	implementation("com.linecorp.bot:line-bot-messaging-api-client:8.6.0")
+	implementation("com.linecorp.bot:line-bot-insight-client:8.6.0")
+	implementation("com.linecorp.bot:line-bot-manage-audience-client:8.6.0")
+	implementation("com.linecorp.bot:line-bot-module-attach-client:8.6.0")
+	implementation("com.linecorp.bot:line-bot-module-client:8.6.0")
+	implementation("com.linecorp.bot:line-bot-shop-client:8.6.0")
+	implementation("com.linecorp.bot:line-channel-access-token-client:8.6.0")
+	implementation("com.linecorp.bot:line-liff-client:8.6.0")
+
+	implementation("com.linecorp.bot:line-bot-webhook:8.6.0")
+	implementation("com.linecorp.bot:line-bot-parser:8.6.0") // You don't need to depend on this explicitly.
+
+	implementation("com.linecorp.bot:line-bot-spring-boot-webmvc:8.6.0")
+	implementation("com.linecorp.bot:line-bot-spring-boot-client:8.6.0") // If you want to write spring-boot API client
+	implementation("com.linecorp.bot:line-bot-spring-boot-handler:8.6.0") // You don't need to depend on this explicitly.
+	implementation("com.linecorp.bot:line-bot-spring-boot-web:8.6.0") // You don't need to depend on this explicitly.
 }
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.withType<JavaCompile>().configureEach {
+	options.encoding = "UTF-8"
 }
