@@ -1,4 +1,0 @@
-Flask>=2.3.3
-line-bot-sdk>=3.4.0
-PyYAML>=6.0.1
-smbus2>=0.4.3
