@@ -10,7 +10,7 @@
 > v1ブランチの制作物は3年前に開発した初期バージョンで一通りの機能が実装済みです。  
 
 ## 動作テスト環境
-- [Raspberry Pi 4 Model B 8GB](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/), [Raspberry Pi Zero WH](https://www.raspberrypi.com/products/raspberry-pi-zero-w/)
+- [Raspberry Pi 4 Model B Rev 1.4 (8GB RAM)](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/), [Raspberry Pi Zero WH](https://www.raspberrypi.com/products/raspberry-pi-zero-w/)
 - [Raspberry Pi Camera Module 2](https://www.raspberrypi.com/products/camera-module-v2/)
 - Raspberry Pi OS Bookworm (32bit, 64bit)
 

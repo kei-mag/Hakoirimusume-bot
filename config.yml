@@ -1,0 +1,10 @@
+# Configurations for Hakoirimusume
+AIKOTOBA_EXPIRED_TIME: 60 # sec.  Aikotoba will be expired after this time and new aikotoba will be generated.
+REQUEST_TIME_OUT: 300 # sec.  Any requests (i.e., authorization) will be timed out after this time.
+
+# LINE Messaging API
+CHANNEL_ACCESS_TOKEN: ${env:LINE_CHANNEL_ACCESS_TOKEN} # Type your Channel Access Token or ${env_val_name} to specify environment variable.
+CHANNEL_SECRET: ${LINE_CHANNEL_ACCESS_SECRET} # Type your Channel Secret or ${env_val_name} to specify environment variable.
+
+# Imgur Token
+IMGUR_CLIENT_ID: ${IMGUR_CLIENT_ID} # Type your Client ID of Imgur or ${env_val_name} to specify environment variable.
