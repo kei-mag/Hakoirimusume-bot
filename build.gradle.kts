@@ -43,6 +43,10 @@ dependencies {
 	implementation("com.linecorp.bot:line-bot-spring-boot-client:8.6.0") // If you want to write spring-boot API client
 	implementation("com.linecorp.bot:line-bot-spring-boot-handler:8.6.0") // You don't need to depend on this explicitly.
 	implementation("com.linecorp.bot:line-bot-spring-boot-web:8.6.0") // You don't need to depend on this explicitly.
+
+	implementation ("com.pi4j:pi4j-core:2.5.1")
+	implementation ("com.pi4j:pi4j-plugin-raspberrypi:2.5.1")
+	implementation ("com.pi4j:pi4j-plugin-gpiod:2.5.1")
 }
 
 tasks.withType<Test> {
