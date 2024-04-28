@@ -10,7 +10,8 @@ class HakoirimusumeApplicationTests {
 
 	@Test
 	void contextLoads() {
-
+		var bme280 = new BME280Driver(1, 0x76);
+		bme280.read();
 	}
 
 }
