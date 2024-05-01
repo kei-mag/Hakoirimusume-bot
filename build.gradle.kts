@@ -35,6 +35,7 @@ dependencies {
 	implementation("com.linecorp.bot:line-bot-shop-client:8.6.0")
 	implementation("com.linecorp.bot:line-channel-access-token-client:8.6.0")
 	implementation("com.linecorp.bot:line-liff-client:8.6.0")
+	compileOnly("org.springframework.boot:spring-boot-configuration-processor")
 
 	implementation("com.linecorp.bot:line-bot-webhook:8.6.0")
 	implementation("com.linecorp.bot:line-bot-parser:8.6.0") // You don't need to depend on this explicitly.
@@ -43,6 +44,10 @@ dependencies {
 	implementation("com.linecorp.bot:line-bot-spring-boot-client:8.6.0") // If you want to write spring-boot API client
 	implementation("com.linecorp.bot:line-bot-spring-boot-handler:8.6.0") // You don't need to depend on this explicitly.
 	implementation("com.linecorp.bot:line-bot-spring-boot-web:8.6.0") // You don't need to depend on this explicitly.
+
+	implementation ("com.pi4j:pi4j-core:2.6.0")
+	implementation ("com.pi4j:pi4j-plugin-raspberrypi:2.6.0")
+	implementation ("com.pi4j:pi4j-plugin-linuxfs:2.6.0")
 }
 
 tasks.withType<Test> {
