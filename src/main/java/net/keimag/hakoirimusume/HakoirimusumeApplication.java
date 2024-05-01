@@ -1,5 +1,6 @@
 package net.keimag.hakoirimusume;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -28,9 +29,9 @@ public class HakoirimusumeApplication {
 		SpringApplication.run(HakoirimusumeApplication.class, args);
 	}
 
-	public HakoirimusumeApplication(MessagingApiClient messagingApiClient) {
+	public HakoirimusumeApplication(MessagingApiClient messagingApiClient) throws IOException {
 		this.messagingApiClient = messagingApiClient;
-		this.rabbitsHouseReportSupplier = new RabbitsHouseReportSupplier("src/main/resources/static/report_template.json");
+		this.rabbitsHouseReportSupplier = new RabbitsHouseReportSupplier("src/main/resources/static/report_template.json", new BME280(1, 0x76));
 	}
 
 	@EventMapping

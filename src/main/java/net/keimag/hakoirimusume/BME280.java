@@ -6,64 +6,83 @@ import com.pi4j.util.Console;
 import com.pi4j.io.i2c.I2C;
 import com.pi4j.io.i2c.I2CConfig;
 import com.pi4j.io.i2c.I2CProvider;
+import org.slf4j.Logger;
 
-import java.text.DecimalFormat;
+//import java.text.DecimalFormat;
 
 
 
-public class BME280Driver {
+public class BME280 {
     private static final Console console = new Console(); // Pi4J Logger helper
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(BME280.class);
     private final Context pi4j;
     private final I2CProvider i2cProvider;
     private final I2CConfig i2cConfig;
+    private final I2C bme280Sensor;
 
-    public BME280Driver(int i2cBusNumber, int i2cAddr) {
-         this.pi4j = Pi4J.newAutoContext();
-         this.i2cProvider = pi4j.provider("linuxfs-i2c");
-         i2cConfig = I2C.newConfigBuilder(pi4j)
-            .id("BME280")
-            .name("BME280")
-            .bus(i2cBusNumber)
-            .device(i2cAddr)
-            .build();
-    }
+    public static class BME280Data {
+        public final double temperature;  // °C
+        public final double temperature_f;  // °F
+        public final double pressure;  // hPa
+        public final double pressure_bar;  // bar
+        public final double pressure_atm;  // atm
+        public final double humidity;  // %
 
-    public void read() {
-        try (I2C bme280 = i2cProvider.create(i2cConfig)) {
-            for (int counter = 0; counter < 10; counter++) {
-                console.println("**************************************");
-                console.println("Reading values, loop " + (counter + 1));
-
-                resetSensor(bme280);
-
-                // The sensor needs some time to make the measurement
-                Thread.sleep(300);
-
-                getMeasurements(bme280);
-
-                Thread.sleep(5000);
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        public BME280Data(double temperature, double pressure, double humidity) {
+            this.temperature = temperature;
+            this.temperature_f = temperature * 1.8 + 32;
+            this.pressure = pressure;
+            this.pressure_bar = pressure / 100_000;  // 1 Pa = 0.00001 bar or 1 bar = 100,000 Pa
+            this.pressure_atm = pressure / 101_325;  // 1 Pa = 0.0000098692316931 atmosphere (standard) and 1 atm = 101.325 kPa
+            this.humidity = humidity;
         }
 
-        pi4j.shutdown();
+        @Override
+        public String toString() {
+            return "BME280Data{" +
+                    "temperature=" + temperature + "°C" +
+                    ", pressure=" + pressure + "Pa" +
+                    ", humidity=" + humidity + "%" +
+                    '}';
+        }
+    }
 
-        console.println("**************************************");
-        console.println("Finished");
+    public BME280(int i2cBusNumber, int i2cAddr) {
+        this.pi4j = Pi4J.newAutoContext();
+        this.i2cProvider = pi4j.provider("linuxfs-i2c");
+        i2cConfig = I2C.newConfigBuilder(pi4j)
+        .id("BME280")
+        .name("BME280")
+        .bus(i2cBusNumber)
+        .device(i2cAddr)
+        .build();
+        I2C sensor;
+        try {
+            sensor = i2cProvider.create(i2cConfig);
+        } catch (Exception e) {
+            log.error("Failed to launch BME280 sensor, continued without sensor data.", e);
+            sensor = null;
+        }
+        this.bme280Sensor = sensor;
+    }
+
+    public BME280Data getMeasurements() {
+        try {
+            return read();
+        } catch (Exception e) {
+            log.error("Exception was occurred while reading data of BME280.", e);
+            return null;
+        }
     }
 
     /**
      * The chip will be reset, forcing the POR (PowerOnReset)
      * steps to occur. Once completes the chip will be configured
      * to operate 'forced' mode and single sample.
-     * @param device
      * @throws Exception
      */
-    private static void resetSensor(I2C device) throws Exception {
-
+    private void resetSensor() throws Exception {
+        I2C device = this.bme280Sensor;
         int rc = device.writeRegister(BMP280Declares.reset, BMP280Declares.reset_cmd);
         // The sensor needs some time to complete POR steps
         Thread.sleep(300);
@@ -100,9 +119,9 @@ public class BME280Driver {
      * Three register sets containing the readings are read, then all factory
      * compensation registers are read. The compensated reading are calculated and
      * displayed.
-     * @param device
      */
-    private static void getMeasurements(I2C device) {
+    private BME280Data read() {
+        I2C device = this.bme280Sensor;
         byte[] buff = new byte[6];
         device.readRegister(BMP280Declares.press_msb, buff);
         long adc_T =  (long)  ((buff[3] & 0xFF) << 12) |  (long)  ((buff[4] & 0xFF) << 4) |  (long) ((buff[5] & 0x0F) >> 4);
@@ -116,7 +135,7 @@ public class BME280Driver {
 
         byte[] compVal = new byte[2];
 
-        DecimalFormat df = new DecimalFormat("0.###");
+//        DecimalFormat df = new DecimalFormat("0.###");
 
         // Temperature
         device.readRegister(readReg, compVal);
@@ -134,8 +153,8 @@ public class BME280Driver {
         double t_fine = (int) (var1 + var2);
         double temperature = (var1 + var2) / 5120.0;
 
-        console.println("Temperature: " + df.format(temperature) + " °C");
-        console.println("Temperature: " + df.format(temperature* 1.8 + 32) + " °F ");
+//        console.println("Temperature: " + df.format(temperature) + " °C");
+//        console.println("Temperature: " + df.format(temperature* 1.8 + 32) + " °F ");
 
         // Pressure
         device.readRegister(BMP280Declares.reg_dig_p1, compVal);
@@ -183,11 +202,11 @@ public class BME280Driver {
             pressure = pressure + (var1 + var2 + ((double) dig_p7)) / 16.0;
         }
 
-        console.println("Pressure: " + df.format(pressure) + " Pa");
+//        console.println("Pressure: " + df.format(pressure) + " Pa");
         // 1 Pa = 0.00001 bar or 1 bar = 100,000 Pa
-        console.println("Pressure: " + df.format(pressure / 100_000) + " bar");
+//        console.println("Pressure: " + df.format(pressure / 100_000) + " bar");
         // 1 Pa = 0.0000098692316931 atmosphere (standard) and 1 atm = 101.325 kPa
-        console.println("Pressure: " + df.format(pressure / 101_325) + " atm");
+//        console.println("Pressure: " + df.format(pressure / 101_325) + " atm");
 
 
         // Humidity
@@ -223,17 +242,17 @@ public class BME280Driver {
             humidity = 0.0;
         }
 
-        console.println("Humidity: " + df.format(humidity) + " %");
+//        console.println("Humidity: " + df.format(humidity) + " %");
 
 
-
+        return new BME280Data(temperature, pressure, humidity);
     }
 
     /**
      * @param read 8 bits data
      * @return unsigned value
      */
-    private static int castOffSignByte(byte read) {
+    private int castOffSignByte(byte read) {
         return ((int) read & 0Xff);
     }
 
@@ -242,7 +261,7 @@ public class BME280Driver {
      * @param read 8 bits data
      * @return signed value
      */
-    private static int signedByte(byte[] read) {
+    private int signedByte(byte[] read) {
         return ((int)read[0] );
     }
 
@@ -250,7 +269,7 @@ public class BME280Driver {
      * @param read 16 bits of data  stored in 8 bit array
      * @return 16 bit signed
      */
-    private static int signedInt(byte[] read) {
+    private int signedInt(byte[] read) {
         int temp = 0;
         temp = (read[0] & 0xff);
         temp += (((long) read[1]) << 8);
@@ -261,7 +280,7 @@ public class BME280Driver {
      * @param read 16 bits of data  stored in 8 bit array
      * @return 64 bit unsigned value
      */
-    private static long castOffSignInt(byte[] read) {
+    private long castOffSignInt(byte[] read) {
         long temp = 0;
         temp = ((long) read[0] & 0xff);
         temp += (((long) read[1] & 0xff)) << 8;
