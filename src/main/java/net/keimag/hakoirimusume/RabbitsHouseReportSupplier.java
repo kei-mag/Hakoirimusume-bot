@@ -7,21 +7,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.function.Supplier;
 
+import static net.keimag.hakoirimusume.CommonUtil.loadTextResource;
+
 @Component
 public class RabbitsHouseReportSupplier implements Supplier<FlexMessage> {
     private static final Logger log = LoggerFactory.getLogger(RabbitsHouseReportSupplier.class);
     private static final String templateJsonPath =  "src/main/resources/templates/report_template.json";
 
-    private final String templateJson = Files.readString(Paths.get(templateJsonPath));
+    private final String templateJson = loadTextResource(templateJsonPath);
     private final SensorService sensorService;
     private final Calendar c = Calendar.getInstance();
     private final SimpleDateFormat uiDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");

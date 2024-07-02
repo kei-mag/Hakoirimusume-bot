@@ -21,6 +21,8 @@ import com.linecorp.bot.webhook.model.MessageEvent;
 import com.linecorp.bot.webhook.model.TextMessageContent;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import static net.keimag.hakoirimusume.CommonUtil.loadTextResource;
+
 @SpringBootApplication
 @EnableScheduling
 @LineMessageHandler
@@ -31,7 +33,7 @@ public class HakoirimusumeApplication {
 	private final UserService userService;
 	private final Authorizer authorizer;
 	private final HakoirimusumeProperties hakoirimusumeProperties;
-	private final String menuJson = Files.readString(Paths.get("src/main/resources/templates/menu.json"));
+	private final String menuJson = loadTextResource("src/main/resources/templates/menu.json");
 	private boolean isInitializationMode = false;
 
 	public static void main(String[] args) {

@@ -18,4 +18,6 @@ hardware:
   bme280.i2c-address: 0x76
 
 # Generative filepaths
-filepath.sensor-data: "./sensor-data.csv"
+datalog:
+  filepath: "./sensor-data.csv"
+  level: "withcamera"  # "ALL" or "withcamera"

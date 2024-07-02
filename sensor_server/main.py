@@ -22,6 +22,7 @@ enable_camera = False
 i2c_bus = 1
 i2c_addr = 0x76
 sensor_data_file = "./sensor_data.csv"
+log_level = "ALL"
 # ---------------------------------
 
 dashboard_html = """
@@ -68,7 +69,7 @@ def main():
     print(f"Enable Camera: {enable_camera}")
     print(f"BME280 I2C-BUS: {i2c_bus}")
     print(f"BME280 I2C-ADDR: 0x{i2c_addr:x}")
-    print(f"Sensor Data File: {os.path.abspath(sensor_data_file)}")
+    print(f"Sensor Data File: {sensor_data_file}")
     print("------------------------")
     try:
         from bme280 import BME280
@@ -97,7 +98,7 @@ def main():
 
 
 def load_config():
-    global port, imgur_client_id, enable_camera, i2c_bus, i2c_addr, sensor_data_file
+    global port, imgur_client_id, enable_camera, i2c_bus, i2c_addr, sensor_data_file, log_level
     yaml=YAML(typ='safe')
     config = yaml.load(open(CONFIG_FILE))
     port = replace_env(config.get("server.port", port))
@@ -116,7 +117,14 @@ def load_config():
     #         i2c_addr = replace_env(hardware_config["bme280"].get("i2c-address", i2c_addr))
     #     if "filepath" in config:
     #         sensor_data_file = replace_env(config["filepath"].get("sensor-data", sensor_data_file))
-    sensor_data_file = replace_env(config.get("filepath.sensor-data", sensor_data_file))
+    if "datalog" in config:
+        datalog_config = config["datalog"]
+        sensor_data_file = replace_env(datalog_config.get("filepath", sensor_data_file))
+        log_level = datalog_config.get("level", log_level)
+    cwd = os.getcwd()
+    os.chdir(os.path.dirname(CONFIG_FILE))
+    sensor_data_file = os.path.abspath(sensor_data_file)
+    os.chdir(cwd)
 
 
 def replace_env(value):
@@ -125,6 +133,21 @@ def replace_env(value):
         if match:
             return ENV_VAL_FORM.sub(os.getenv(match.group(1), ""), value)
     return value
+
+def get_current_iso_timestamp():
+    cur_time = datetime.datetime.now()
+    # Calculate offset time without pytz package
+    offset = cur_time.replace(tzinfo=datetime.UTC) - datetime.datetime.now(datetime.UTC)
+    total_seconds = offset.total_seconds()
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, _ = divmod(remainder, 60)
+    offset_str = "{:+03d}:{:02d}".format(int(hours), int(minutes))
+    timestamp_iso = cur_time.replace(microsecond=0).isoformat() + offset_str
+    return timestamp_iso
+
+def write_log(timestamp, temp, hum, press, image_url=None, deletehash=None):
+    with open(sensor_data_file, "a") as file:
+        file.write(f"{timestamp},{temp},{hum},{press},{image_url},{deletehash}\n")
 
 
 class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
@@ -144,6 +167,8 @@ class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             if bme280:
                 try:
                     temp, press, humid = bme280.read_data()
+                    if log_level == "ALL":
+                        write_log(get_current_iso_timestamp(), temp, humid, press)
                 except Exception as e:
                     print("Failed to get BME280 data: ", e)
                 else:
@@ -164,15 +189,8 @@ class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                     temp, press, humid = bme280.read_data()
                 except Exception as e:
                     print("Failed to get BME280 data: ", e)
-            cur_time = datetime.datetime.now()
-            # Calculate offset time without pytz package
-            offset = cur_time.replace(tzinfo=datetime.UTC) - datetime.datetime.now(datetime.UTC)
-            total_seconds = offset.total_seconds()
-            hours, remainder = divmod(total_seconds, 3600)
-            minutes, _ = divmod(remainder, 60)
-            offset_str = "{:+03d}:{:02d}".format(int(hours), int(minutes))
-            timestamp_iso = cur_time.replace(microsecond=0).isoformat() + offset_str
-            content = {"time": timestamp_iso}
+            cur_timestamp = get_current_iso_timestamp()
+            content = {"time": get_current_iso_timestamp()}
             content["temp"] = temp
             content["humid"] = humid
             content["press"] = press
@@ -189,6 +207,12 @@ class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                         )
                     except Exception as e:
                         print("Failed to get PiCamera data: ", e)
+                    write_log(cur_timestamp, temp, humid, press, content["photo"], content["deletehash"])
+                else:
+                    write_log(cur_timestamp, temp, humid, press)
+            else:
+                if log_level == "ALL":
+                    write_log(cur_timestamp, temp, humid, press)
             self._send_response(json.dumps(content), content_type="application/json")
         else:
             self.send_response(404)
