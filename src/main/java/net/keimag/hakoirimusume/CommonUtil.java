@@ -18,8 +18,7 @@ public class CommonUtil {
             InputStream inputStream = new ClassPathResource(path).getInputStream();
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (FileNotFoundException e) {
-            log.warn("File not found in classpath: {}", path);
-            log.warn("Trying to load from file system...");
+            log.warn("File not found in classpath: {}\nTrying to load from file system...", path);
             return java.nio.file.Files.readString(java.nio.file.Paths.get(path));
         }
     }

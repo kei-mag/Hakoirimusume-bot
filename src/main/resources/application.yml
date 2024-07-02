@@ -72,8 +72,10 @@ hakoirimusume:
   request.timeout-sec: 300  # sec.
 
 
-# To remove Client wire logs. Please comment out following lines.
+# To change line client and hakoirimusume logs. Please edit the  following lines.
 # See: https://docs.spring.io/spring-boot/docs/current/reference/html/howto-logging.html
 #
-#logging.level:
-#   com.linecorp.bot.client.wire: INFO
+logging.level:
+#   root: WARN
+   com.linecorp.bot.client.wire: WARN
+   net.keimag.hakoirimusume: WARN
