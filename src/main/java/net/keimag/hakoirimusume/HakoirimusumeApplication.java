@@ -32,6 +32,7 @@ public class HakoirimusumeApplication {
 	private final Authorizer authorizer;
 	private final HakoirimusumeProperties hakoirimusumeProperties;
 	private final String menuJson = Files.readString(Paths.get("src/main/resources/templates/menu.json"));
+	private boolean isInitializationMode = false;
 
 	public static void main(String[] args) {
 		SpringApplication.run(HakoirimusumeApplication.class, args);
@@ -44,13 +45,56 @@ public class HakoirimusumeApplication {
 		this.userService = userService;
         this.authorizer = authorizer;
         this.hakoirimusumeProperties = hakoirimusumeProperties;
-        applyRichMenu();
+		if (userService.getAdmins().isEmpty()) {
+			log.info("There is no administrator yet in the Hakoirimusume database.");
+			log.info("Starting initialization...");
+			initialize();
+		} else {
+			applyRichMenu();
+		}
     }
+
+	public void initialize() {
+		System.out.println("=======================================================");
+		System.out.println("=======================================================");
+		System.out.println("               Welcome to Hakoirimusume!               ");
+		System.out.println("-------------------------------------------------------");
+		System.out.println("Please configure the administrator of Hakoirimusume.");
+		System.out.println();
+		System.out.println(" STEP 1: Please follow Hakoirimusume LINE bot.");
+		System.out.println(" STEP 2: Send the following aikotoba to the bot by direct message.");
+		System.out.println("           Aikotoba: " + authorizer.generateNewAikotoba("initializer"));
+		System.out.println("           (Initial aikotoba is a string consisting of the first words from the list of Aikotoba.Seeds set in 'application.yml'.)");
+		System.out.println(" STEP 3: System will starts with normal operation");
+		System.out.println("         (Recommend: Restart application for stable operation)");
+		System.out.println();
+		System.out.println("[CAUTION] Initial aikotoba is valid for 24 hours, so please complete the initialization process for security reasons.");
+		System.out.println("=======================================================");
+		System.out.println("=======================================================");
+		isInitializationMode = true;
+	}
 
 	@EventMapping
 	public void handleTextMessageEvent(MessageEvent event) {
 		log.info("event: {}", event);
 		final String originalMessageText = ((TextMessageContent) event.message()).text();
+		if (isInitializationMode) {
+			if (authorizer.authorize(originalMessageText)) {
+				messagingApiClient.showLoadingAnimation(new ShowLoadingAnimationRequest(event.source().userId(), 10));
+				userService.addUser(event.source().userId());
+				userService.setRole(event.source().userId(), UserService.ADMIN);
+				userService.resetStates();
+				applyRichMenu();
+				try {
+					String name = messagingApiClient.getProfile(event.source().userId()).get().body().displayName();
+					this.reply(event.replyToken(), List.of(new TextMessage("箱入り娘へようこそ！\n" + name + "さんは管理者として登録されました😁\n念のため、アプリケーションを再起動することをお勧めします。"),
+							new TextMessage("MENUの中の「ユーザー招待」をタップすると合言葉を取得できます。\n他の人を招待してボットの運用を始めましょう！😆")), false);
+				}catch (InterruptedException | ExecutionException e) {
+					throw new RuntimeException(e);
+				}
+			}
+			return;
+		}
 		switch (originalMessageText) {
 			case "ユーザー認証":
 				if (userService.getRole(event.source().userId()) != null && userService.getRole(event.source().userId()) >= UserService.USER) {
@@ -72,13 +116,13 @@ public class HakoirimusumeApplication {
 				log.info("Replied.");
 				break;
 			case "げんき？":
-				doForUser(event.source().userId(), event.replyToken(), () -> {
+				doForUser(event, () -> {
 					messagingApiClient.showLoadingAnimation(new ShowLoadingAnimationRequest(event.source().userId(), 30));
 					this.reply(event.replyToken(), List.of(rabbitsHouseReportSupplier.get()), false);
 				});
 				break;
 			case "メニューをひらいて":
-				doForUser(event.source().userId(), event.replyToken(), () -> {
+				doForUser(event, () -> {
 					this.reply(event.replyToken(), List.of(new FlexMessageBuilder().build("MENU", this.menuJson)), false);
 				});
 				break;
@@ -120,16 +164,22 @@ public class HakoirimusumeApplication {
 		}
 	}
 
-	private void doForUser(String userId, String replyToken, Runnable action) {
-		if (userService.isSatisfiedRole(userId, UserService.USER)) {
+	private void doForUser(MessageEvent event, Runnable action) {
+		if (userService.isSatisfiedRole(event.source().userId(), UserService.USER)) {
 			action.run();
 		} else {
-			this.reply(replyToken, List.of(new TextMessage("箱入り娘の機能を使うには最初にユーザー認証が必要です。\n使っている人に合言葉を教えてもらってから\n「ユーザー認証」\nと言ってみてね！🙏")), false);
+			this.reply(event.replyToken(), List.of(new TextMessage("箱入り娘の機能を使うには最初にユーザー認証が必要です。\n使っている人に合言葉を教えてもらってから\n「ユーザー認証」\nと言ってみてね！🙏")), false);
 		}
 	}
 
 	private void applyRichMenu() {
 		HakoirimusumeProperties.RichmenuProperties richmenuProperties = hakoirimusumeProperties.getRichmenu();
+		messagingApiClient.richMenuBatch(new RichMenuBatchRequest(List.of(new RichMenuBatchUnlinkOperation(richmenuProperties.getForAuthorizedUser())), "commonResumeRequestKey"));
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			/* ignore */
+		}
 		if (!userService.getUsers().isEmpty()) {
 			messagingApiClient.linkRichMenuIdToUsers(new RichMenuBulkLinkRequest(richmenuProperties.getForAuthorizedUser(), userService.getUsers()));
 		}
