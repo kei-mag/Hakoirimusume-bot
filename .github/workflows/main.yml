@@ -25,6 +25,7 @@ jobs:
         id: app_version
         run: |
           VERSION=$(grep '^version = ' build.gradle.kts | awk -F' = ' '{gsub(/"/, "", $2); print $2}')
+          echo "Extracted VERSION: $VERSION"
           echo "::set-output name=VERSION::$VERSION"
         shell: bash
 
@@ -34,7 +35,7 @@ jobs:
           script: |
             const tagName = `v${{ steps.app_version.outputs.VERSION }}`;
             const ref = `refs/tags/${tagName}`;
-            await github.git.createRef({
+            await github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: ref,
@@ -53,7 +54,6 @@ jobs:
           cp -r tools release_assets/
           cp src/main/resources/application.yml release_assets/
           zip -r Hakoirimusume-${{ steps.create_tag.outputs.result }}.zip release_assets
-
       - name: Create Draft Release
         uses: actions/create-release@v1
         env:
