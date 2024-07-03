@@ -24,7 +24,7 @@ jobs:
       - name: Extract version from application.yml
         id: app_version
         run: |
-          VERSION=$(grep 'version:' src/main/resources/application.yml | awk '{print $2}')
+          VERSION=$(grep 'version:' src/main/resources/application.yml | awk -F': ' '{gsub(/"/, "", $2); print $2}')
           echo "::set-output name=VERSION::$VERSION"
         shell: bash
 
