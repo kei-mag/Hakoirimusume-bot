@@ -173,7 +173,7 @@
     "contents": [
       {
         "type": "text",
-        "text": "周囲環境によっては値が正確ではない場合があります。",
+        "text": "【測定誤差】 温度: ±1℃  湿度: ±3%  気圧: ±1hPa",
         "color": "#AAAAAA",
         "size": "xxs",
         "margin": "none",

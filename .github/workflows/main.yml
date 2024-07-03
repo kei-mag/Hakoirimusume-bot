@@ -19,7 +19,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Build with Gradle
-        run: ./gradlew bootJar
+        run: ./gradlew build bootJar
 
       - name: Extract version from application.yml
         id: app_version
@@ -52,7 +52,7 @@ jobs:
           cp -r RemotePy_Server release_assets/
           cp -r tools release_assets/
           cp src/main/resources/application.yml release_assets/
-          zip -r release_assets.zip release_assets
+          zip -r Hakoirimusume-${{ steps.create_tag.outputs.result }}.zip release_assets
 
       - name: Create Draft Release
         uses: actions/create-release@v1
@@ -64,4 +64,4 @@ jobs:
           draft: true
           body: |
             New release ${{ steps.create_tag.outputs.result }}.
-          assets_path: release_assets.zip
+          assets_path: Hakoirimusume-${{ steps.create_tag.outputs.result }}.zip
