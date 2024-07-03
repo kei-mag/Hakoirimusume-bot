@@ -65,11 +65,12 @@ jobs:
           draft: true
           body: |
             New release ${{ steps.create_tag.outputs.result }}.
+        id: create_release
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         with:
-          upload_url: ${{ steps.create_tag.outputs.upload_url }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./Hakoirimusume-${{ steps.create_tag.outputs.result }}.zip
           asset_name: Hakoirimusume-${{ steps.create_tag.outputs.result }}.zip
           asset_content_type: application/zip
