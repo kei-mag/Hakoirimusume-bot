@@ -21,10 +21,10 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build bootJar
 
-      - name: Extract version from application.yml
+      - name: Extract version from build.gradle.kts
         id: app_version
         run: |
-          VERSION=$(grep 'version:' src/main/resources/application.yml | awk -F': ' '{gsub(/"/, "", $2); print $2}')
+          VERSION=$(grep '^version = ' build.gradle.kts | awk -F' = ' '{gsub(/"/, "", $2); print $2}')
           echo "::set-output name=VERSION::$VERSION"
         shell: bash
 
