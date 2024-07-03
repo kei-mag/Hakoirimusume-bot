@@ -29,11 +29,10 @@ public class Authorizer {
         if (generationUser.equals("initializer")) {
             this.aikotoba = "";
             aikotobaProperties.getSeeds().forEach(seed -> {
-                log.info(seed.get(0));
                 this.aikotoba += seed.get(0);
             });
             this.expirationPeriod = Calendar.getInstance();
-            this.expirationPeriod.add(Calendar.HOUR, 24);
+            this.expirationPeriod.add(Calendar.HOUR, 1);
             this.generationUser = generationUser;
             log.debug("InitialAikotoba: {}, User: {}, Expiration: {}, Now: {}", this.aikotoba, this.generationUser, this.expirationPeriod.getTime(), Calendar.getInstance().getTime());
             return this.aikotoba;
@@ -57,12 +56,8 @@ public class Authorizer {
 
     public boolean authorize(String aikotoba) {
         invalidateAikotoba();
-        boolean isSucceed = false;
-        if (aikotoba.equals(this.aikotoba)) {
-            isSucceed = true;
-        }else {
-            isSucceed = false;
-        }
+        boolean isSucceed;
+        isSucceed = aikotoba.equals(this.aikotoba);
         log.debug("CurrentAikotoba: {}, EnteredAikotoba: {}, isSucceed: {}", this.aikotoba, aikotoba, isSucceed);
         if (!generationUser.equals("initializer")) {
             deleteAikotoba();

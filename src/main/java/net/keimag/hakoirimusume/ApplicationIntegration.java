@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.BufferedReader;
@@ -27,12 +28,12 @@ public class ApplicationIntegration {
         this.projectRootDir = new File(Objects.requireNonNull(environment.getProperty("user.dir"))).getAbsolutePath();
     }
 
-    public Result get(String url) {
+    public Result get(String url) throws RestClientException {
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
         return new Result(response.getStatusCode().value(), response.getBody());
     }
 
-    public Result post(String url, Map<String, Object> header, Map<String, Object> body) {
+    public Result post(String url, Map<String, Object> header, Map<String, Object> body) throws RestClientException {
         HttpHeaders headers = new HttpHeaders();
         if (header != null) {
             header.forEach((key, value) -> headers.add(key, value.toString()));
@@ -44,7 +45,7 @@ public class ApplicationIntegration {
         return new Result(response.getStatusCode().value(), response.getBody());
     }
 
-    public Result exec(String command) {
+    public Result exec(String command) throws RuntimeException {
         if (command == null || command.isBlank()) {
             throw new IllegalArgumentException("Command must not be null or blank");
         }

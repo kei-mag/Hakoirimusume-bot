@@ -15,7 +15,7 @@ public class CommonUtil {
 
     public static String loadTextResource(String path) throws IOException {
         try {
-            InputStream inputStream = new ClassPathResource(path).getInputStream();
+            InputStream inputStream = new ClassPathResource(path.replace("src/main/resources/", "")).getInputStream();
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (FileNotFoundException e) {
             log.warn("File not found in classpath: {}\nTrying to load from file system...", path);

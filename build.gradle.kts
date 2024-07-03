@@ -10,6 +10,7 @@ version = "2.0.0-SNAPSHOT"
 
 java {
 	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
 }
 
 configurations {
@@ -42,6 +43,12 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 }
 
+tasks.withType<Jar> {
+	manifest {
+		attributes["Implementation-Version"] = project.version
+	}
+}
+
 tasks.bootJar {
 	enabled = true
 }
@@ -49,3 +56,4 @@ tasks.bootJar {
 tasks.withType<JavaCompile>().configureEach {
 	options.encoding = "UTF-8"
 }
+

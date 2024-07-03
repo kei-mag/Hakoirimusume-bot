@@ -33,10 +33,10 @@ hakoirimusume:
 #      "Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 #      "Uyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
     ]
-    polling-interval-sec: 300 # sec. >= 10
+    polling-interval-sec: 300 # sec. >= 10, (start polling 300 sec. after launching)
     condition:
       # current temperature or humidity >= {these value}  --->  send alert
-      temperature: -1  # integer, float or -1 (no temperature condition)
+      temperature: 26.5  # integer, float or -1 (no temperature condition)
       humidity: -1  # integer, float or -1 (no humidity condition)
     trigger-limit:
       interval: 3 # hours each
@@ -51,6 +51,7 @@ hakoirimusume:
       # {{DATE}} : yyyymmdd string of alert date (e.g., 20240425)
       # {{TIME}} : HHMMSS string of alert local time (e.g., 113911)
       target: "triggered-script.sh arg1 arg2"  # String, specify URL (when type is "GET" or "POST") or command (when type is "COMMAND")
+      # header and body must be JSON String.
       header: "POST Header" # null (no header) | String, contents of request header, valid only when type is "POST", this value will be ignored when type is not "POST"
       body: "POST Body"  # String, contents of request body, valid only when type is "POST", this value will be ignored when type is not "POST"
       success-message: "エアコンを点けたよ！"  # This string will be sent to users with alert on success executing action.
@@ -66,8 +67,8 @@ hakoirimusume:
   remote-shutdown:
     enable: true
     available-role: user  # user | admin
-    command: "sudo shutdown -h -t 15"
-    success-message: "15秒後にシャットダウンするね\nおやすみなさい😴"
+    command: "sudo shutdown -h -t 5"
+    success-message: "サーバーをシャットダウンするね。\n⚠️少なくとも30秒は電源コードを抜かないで‼️"
     failure-message: "シャットダウンに失敗しちゃった😱\n設置した人にきいてみて！🙏"
   request.timeout-sec: 300  # sec.
 
@@ -75,7 +76,7 @@ hakoirimusume:
 # To change line client and hakoirimusume logs. Please edit the  following lines.
 # See: https://docs.spring.io/spring-boot/docs/current/reference/html/howto-logging.html
 #
-logging.level:
+#logging.level:
 #   root: WARN
-   com.linecorp.bot.client.wire: WARN
-   net.keimag.hakoirimusume: WARN
+#   com.linecorp.bot.client.wire: WARN
+#   net.keimag.hakoirimusume: WARN

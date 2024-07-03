@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.function.Supplier;
 
 import static net.keimag.hakoirimusume.CommonUtil.loadTextResource;
@@ -22,10 +21,14 @@ public class RabbitsHouseReportSupplier implements Supplier<FlexMessage> {
 
     private final String templateJson = loadTextResource(templateJsonPath);
     private final SensorService sensorService;
-    private final Calendar c = Calendar.getInstance();
-    private final SimpleDateFormat uiDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    private final SimpleDateFormat numericDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private final DecimalFormat df = new DecimalFormat("0.0");
+    public Calendar latestGetTime = null;
+    public Double latestTemperature = null;
+    public Double latestHumidity = null;
+    public Double latestPressure = null;
+    public String latestImageUri = null;
+    public String latestDeleteHash = null;
 
     @Autowired
     public RabbitsHouseReportSupplier(SensorService sensorService) throws IOException {
@@ -84,9 +87,14 @@ public class RabbitsHouseReportSupplier implements Supplier<FlexMessage> {
         String reportJson = templateJson;
         String temp = "---", humidity = "---", pressure = "---";
         var data = sensorService.getSensorCameraData();
-        String message = "今はこんな感じです！";
+        String message = "今何度？部屋に来て確認してほしい！🌡️";
         String imageUri = null;
         if (data != null) {
+            latestTemperature = data.temperature();
+            latestHumidity = data.humidity();
+            latestPressure = data.pressure();
+            latestImageUri = data.cameraUrl();
+            latestDeleteHash = data.deleteHash();
             temp = df.format(data.temperature());
             humidity = df.format(data.humidity());
             pressure = df.format(data.pressure());
@@ -95,9 +103,14 @@ public class RabbitsHouseReportSupplier implements Supplier<FlexMessage> {
                 reportJson = reportJson.replace("#FFFFFF", "#DC3545");  // Red frame border
             }
             message = getMessage(data.temperature(), data.humidity(), data.pressure());
+        } else {
+            latestTemperature = null;
+            latestHumidity = null;
+            latestPressure = null;
         }
-        Date currentTime = c.getTime();
-        reportJson = reportJson.replace("{{CurrentTime}}", uiDateFormat.format(currentTime));
+        Calendar currentTime = Calendar.getInstance();
+        latestGetTime = currentTime;
+        reportJson = reportJson.replace("{{CurrentTime}}", dateFormat.format(currentTime.getTime()));
         reportJson = reportJson.replace("{{Temperature}}", temp);
         reportJson = reportJson.replace("{{Humidity}}", humidity);
         reportJson = reportJson.replace("{{Pressure}}", pressure);
