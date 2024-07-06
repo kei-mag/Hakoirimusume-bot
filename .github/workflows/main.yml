@@ -53,7 +53,7 @@ jobs:
           cp -r RemotePy_Server release_assets/
           cp -r tools release_assets/
           cp src/main/resources/application.yml release_assets/
-          zip -r Hakoirimusume-${{ steps.create_tag.outputs.result }}.zip release_assets
+          zip -r Hakoirimusume-${{ steps.create_tag.outputs.result }}.zip release_assets/*
 
       - name: Create Draft Release
         uses: actions/create-release@v1
