@@ -6,7 +6,8 @@ plugins {
 }
 
 group = "net.keimag"
-version = "2.1.0-SNAPSHOT"
+
+version = "2.0.1"
 
 java {
 	sourceCompatibility = JavaVersion.VERSION_17

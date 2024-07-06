@@ -121,6 +121,8 @@ def _create_command_list_html(commands_list):
             body_html += f"<h3>{category}</h3>\n"
         body_html += "<ul>\n"
         for command, data in commands.items():
-            body_html += f"<button style=\"font-size:20pt;\" onClick=\"location.href='{command}'\">{command}</button> {data["comment"]}<br><br>\n"
+            body_html += f"""
+            <button style="font-size:20pt;" onClick="sendCommand('{command}')">{command}</button> {data['comment']}<br><br>
+            """
         body_html += "</ul>\n"
     return body_html

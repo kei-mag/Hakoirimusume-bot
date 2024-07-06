@@ -2,7 +2,8 @@
 # For Raspberry Pi Pico W(H)
 #
 # == How to use ==
-# 1. Obtain `UpyIrTx.py` from https://raw.githubusercontent.com/meloncookie/RemotePy/main/micropython/RP2040/FromV1_17/UpyIrTx.py
+# 1. Obtain `UpyIrTx.py` from RemotePy project:
+#    https://github.com/meloncookie/RemotePy/raw/main/micropython/RP2040/FromV1_17/UpyIrRx.py
 # 2. Copy `main.py`, `htmlutil.py`, `index.html` and `UpyIrTx.py` to your Raspberry Pi Pico W(H).
 # 3. Create `codes.json` by `cgir rec` command (https://github.com/IndoorCorgi/cgir)
 #    or create it by yourself with original format.
@@ -168,13 +169,11 @@ while True:
             response = ""
         elif path[1:] in signals:
             tx.send(signals[path[1:]])
-            print(f"command '{path[1:]}' was sent.")
-            response = f"""<html><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><body><h1>SUCCESS</h1>Command '{path[1:]}' was sent.<br>
-            <button style=\"font-size:20pt;\" onClick=\"location.href='../'\">TOP</button></body></html>"""
+            response = f"Command '{path[1:]}' was sent."
+            print(response)
         else:
             code = "404 Not Found"
-            response = f"""<html><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><body><h1>Not Found</h1>No such command is defined: '{path[1:]}'.<br>
-            <button style=\"font-size:20pt;\" onClick=\"location.href='../'\">TOP</button></body></html>"""
+            response = f"404 Not Found\n No such command is defined: '{path[1:]}'."
         # print(response)
         cl.send("HTTP/1.0 %s\r\nContent-type: %s\r\n\r\n" % (code, ct))
         cl.send(response)
