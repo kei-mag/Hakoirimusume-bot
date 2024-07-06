@@ -3,16 +3,18 @@ from picamera2 import Picamera2
 
 
 class PiCamera:
-    def __init__(self, rotation=None):
+    def __init__(self, rotation=None, size=(1640, 1232)):
         """Initialize PiCamera
 
         Parameters
         ----------
         rotate_angle : float, optional
             angle of the image, by default None
+        size : tuple[int, int], optional
+            size of the image, by default (1280, 960)
         """
         self.picam2 = Picamera2()
-        config = self.picam2.create_still_configuration(main={"size": (3280, 2464), "format": "RGB888"})
+        config = self.picam2.create_still_configuration(main={"size": size, "format": "RGB888"})
         self.picam2.start(config=config)
 
     def capture_bytes(self, zoom=None):

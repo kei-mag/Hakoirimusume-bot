@@ -1,2 +1,3 @@
-# Python 3.7 or higher is required.
-ruamel.yaml
+# You don't need to install these dependencies if you are using default Python of Raspberry Pi OS Bookworm or later.
+requests
+tomli  # for Python 3.10 or earlier

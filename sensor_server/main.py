@@ -6,9 +6,13 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 import imgur
-from ruamel.yaml import YAML
 
-CONFIG_FILE = "./config.yml"
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # If you run this script on Python 3.10 or earlier, please install `tomllib` via pip.
+
+CONFIG_FILE = "./config.toml"
 DASHBOARD_HTML_FILE = "templates/dashboard.html"
 SHUTTING_DOWN_HTML_FILE = "templates/shutting_down.html"
 RELOAD_INTERVAL = 600  # sec.
@@ -62,10 +66,10 @@ def main():
     print("Hakoirimusume Sensor Server")
     load_config()
     print("----- Running Info -----")
-    print(f"Working directory: {os.getcwd}")
+    print(f"Working directory: {os.getcwd()}")
     print(f"Loaded config file: {os.path.abspath(CONFIG_FILE)}")
     print(f"Listening PORT: {port}")
-    print("Imgur Client ID: *** (Not be shown for security)")
+    print(f"Imgur Client ID: {imgur_client_id}")
     print(f"Enable Camera: {enable_camera}")
     print(f"BME280 I2C-BUS: {i2c_bus}")
     print(f"BME280 I2C-ADDR: 0x{i2c_addr:x}")
@@ -97,30 +101,32 @@ def main():
     print("Stopped server.")
 
 
+def dict_get(d, key, default=None):
+    """ Get value from dictionary with dot-separated key
+    :param d: Dictionary to be searched
+    :param key: Target key (dot-separated format is available, e.g. "key1.key2.key3")
+    :param default: Default value if the key is not found
+    :return: Value of the key
+    """
+    keys = key.split(".")
+    for k in keys:
+        if k in d:
+            d = d[k]
+        else:
+            return default
+    return d
+
+
 def load_config():
     global port, imgur_client_id, enable_camera, i2c_bus, i2c_addr, sensor_data_file, log_level
-    yaml=YAML(typ='safe')
-    config = yaml.load(open(CONFIG_FILE))
-    port = replace_env(config.get("server.port", port))
-    imgur_client_id = replace_env(config.get("imgur.client-id", imgur_client_id))
-    # if "server" in config:
-    #     port = replace_env(config["server"].get("port", port))
-    # if "imgur" in config:
-    #     imgur_client_id = replace_env(config["imgur"].get("client-id", imgur_client_id))
-    if "hardware" in config:
-        hardware_config = config["hardware"]
-        enable_camera = hardware_config.get("pi-camera", enable_camera)
-        i2c_bus = hardware_config.get("bme280.i2c-bus", i2c_bus)
-        i2c_addr = hardware_config.get("bme280.i2c-address", i2c_addr)
-    #     if "bme280" in hardware_config:
-    #         i2c_bus = replace_env(hardware_config["bme280"].get("i2c-bus", i2c_bus))
-    #         i2c_addr = replace_env(hardware_config["bme280"].get("i2c-address", i2c_addr))
-    #     if "filepath" in config:
-    #         sensor_data_file = replace_env(config["filepath"].get("sensor-data", sensor_data_file))
-    if "datalog" in config:
-        datalog_config = config["datalog"]
-        sensor_data_file = replace_env(datalog_config.get("filepath", sensor_data_file))
-        log_level = datalog_config.get("level", log_level)
+    config = tomllib.load(open(CONFIG_FILE, mode="rb"))
+    port = replace_env(dict_get(config, "server.port", port))
+    imgur_client_id = replace_env(dict_get(config, "imgur.client-id", imgur_client_id))
+    enable_camera = dict_get(config, "hardware.pi-camera", enable_camera)
+    i2c_bus = dict_get(config, "hardware.bme280.i2c-bus", i2c_bus)
+    i2c_addr = dict_get(config, "hardware.bme280.i2c-address", i2c_addr)
+    sensor_data_file = replace_env(dict_get(config, "datalog.filepath", sensor_data_file))
+    log_level = dict_get(config, "datalog.level", log_level)
     cwd = os.getcwd()
     os.chdir(os.path.dirname(CONFIG_FILE))
     sensor_data_file = os.path.abspath(sensor_data_file)
@@ -134,8 +140,8 @@ def replace_env(value):
             return ENV_VAL_FORM.sub(os.getenv(match.group(1), ""), value)
     return value
 
-def get_current_iso_timestamp():
-    cur_time = datetime.datetime.now()
+
+def get_current_iso_timestamp(cur_time=datetime.datetime.now()):
     # Calculate offset time without pytz package
     offset = cur_time.replace(tzinfo=datetime.UTC) - datetime.datetime.now(datetime.UTC)
     total_seconds = offset.total_seconds()
@@ -144,6 +150,7 @@ def get_current_iso_timestamp():
     offset_str = "{:+03d}:{:02d}".format(int(hours), int(minutes))
     timestamp_iso = cur_time.replace(microsecond=0).isoformat() + offset_str
     return timestamp_iso
+
 
 def write_log(timestamp, temp, hum, press, image_url=None, deletehash=None):
     with open(sensor_data_file, "a") as file:
@@ -189,8 +196,9 @@ class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                     temp, press, humid = bme280.read_data()
                 except Exception as e:
                     print("Failed to get BME280 data: ", e)
-            cur_timestamp = get_current_iso_timestamp()
-            content = {"time": get_current_iso_timestamp()}
+            cur_time = datetime.datetime.now()
+            cur_timestamp = get_current_iso_timestamp(cur_time)
+            content = {"time": cur_timestamp}
             content["temp"] = temp
             content["humid"] = humid
             content["press"] = press
@@ -199,12 +207,22 @@ class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 content["deletehash"] = None
                 if camera:
                     try:
-                        content["photo"], content["deletehash"] = imgur.upload_as_anonymous(
-                            imgur_client_id,
-                            camera.capture_bytes(),
-                            capture_datetime=cur_time.strftime("%Y/%m%d %H:%M:%S"),
-                            description=f"Temperature: {temp:.1f}, Humidity: {humid:.1f}%, Pressure: {press:.1f}hPa",
-                        )
+                        try:
+                            image = camera.capture_bytes()
+                        except Exception as e:
+                            print("Failed to capture image: ", e)
+                        else:
+                            if temp is None or humid is None or press is None:
+                                description = "Sensor data is not available."
+                            else:
+                                description = f"Temperature: {temp:.1f}, Humidity: {humid:.1f}%, Pressure: {press:.1f}hPa"
+                            ret = imgur.upload_as_anonymous(imgur_client_id, image,
+                                                            capture_datetime=cur_time.strftime("%Y/%m%d %H:%M:%S"),
+                                                            description=description)
+                            if len(ret) == 2:
+                                content["photo"], content["deletehash"] = ret
+                            else:
+                                print("Failed to upload image to Imgur: ", ret)
                     except Exception as e:
                         print("Failed to get PiCamera data: ", e)
                     write_log(cur_timestamp, temp, humid, press, content["photo"], content["deletehash"])

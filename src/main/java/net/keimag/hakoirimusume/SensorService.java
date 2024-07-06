@@ -52,11 +52,8 @@ public class SensorService {
                     humidity = (double) sensorData.get("humid");
                     pressure = (double) sensorData.get("press");
                 }
-                var photoData = sensorData.get("photo");
-                if (photoData != null) {
-                    cameraUri = (String) ((Map<String, String>) photoData).get("uri");
-                    deleteHash = (String) ((Map<String, String>) photoData).get("deletehash");
-                }
+                cameraUri = (String) sensorData.get("photo");
+                deleteHash = (String) sensorData.get("deletehash");
                 return new SensorData(cameraUri, deleteHash, temperature, humidity, pressure);
             } catch (IOException e) {
                 log.warn("Failed to parse sensor data: {}", e.getMessage());
