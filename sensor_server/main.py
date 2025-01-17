@@ -166,6 +166,7 @@ class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(content.encode())
 
     def do_GET(self):
+        self.log_message("%s", self.headers)
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         query = parse_qs(parsed_path.query, keep_blank_values=True)
@@ -237,6 +238,7 @@ class CustomHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
+        self.log_message("%s", self.headers)
         if self.path == "/":
             content = """
             <!DOCTYPE html>
